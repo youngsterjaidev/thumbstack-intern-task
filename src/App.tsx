@@ -1,5 +1,8 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { navigate } from "@reach/router";
+import download from "downloadjs";
 
 import Item from "./Item";
 
@@ -8,12 +11,17 @@ interface Item {
   quantity: number;
   price: number;
   id: string;
+  path: string;
 }
 
 const Container = styled.div`
   width: 100%;
   display: grid;
   grid-template-columns: 2fr 1fr;
+
+  @media (max-width: 500px) {
+    display: block;
+  }
 `;
 
 const Heading = styled.h2`
@@ -22,10 +30,15 @@ const Heading = styled.h2`
 
 const Checkout = styled.div`
   position: sticky;
-  top: 0;
+  top: 3em;
   background-color: #fff;
   box-shadow: 0px 0px 14px 1px #9898989c;
   padding: 1em;
+  height: max-content;
+  border-radius: 0.5em;
+
+  @media (max-width: 500px) {
+  }
 `;
 
 const CheckoutItems = styled.div`
@@ -33,6 +46,11 @@ const CheckoutItems = styled.div`
   width: 25em;
   overflow-y: auto;
   background: #fff;
+
+  @media (max-width: 500px) {
+    width: 100%;
+    height: auto;
+  }
 `;
 
 const Button = styled.button`
@@ -43,6 +61,7 @@ const Button = styled.button`
   color: #fff;
   margin: 1em 0em;
   border-radius: 5px;
+  font-family: "Noto Sans Display", sans-serif;
 `;
 
 const Wrapper = styled.div`
@@ -65,6 +84,7 @@ const styles = {
 
 export default function App() {
   const [menu, setMenu] = useState<Item[] | null>(null);
+  const [username, setUsername] = useState<string>("Anomoyous");
   const [totalItem, setTotalItem] = useState<Item[] | null>(null);
   const [totalPrice, setTotalPrice] = useState(0);
 
@@ -81,25 +101,57 @@ export default function App() {
     setMenu(temp);
   };
 
-  useEffect(() => {
-    // call the server of the menu
-    setMenu([
-      {
-        id: "1",
-        itemName: "Tea",
-        quantity: 0,
-        price: 100
-      },
-      { itemName: "coffee", quantity: 0, price: 150, id: "2" }
-    ]);
-  }, []);
+  const _fetchMenu = async () => {
+    let val = prompt();
+    if (val) {
+      setUsername(val);
+    }
+    try {
+      let res = await axios.get("https://g4bt0.sse.codesandbox.io/");
+      let { data } = res.data;
 
-  function handlePay() {
+      setMenu(data);
+    } catch (e) {
+      console.error("Error Occured: ", e);
+    }
+  };
+
+  async function handlePay() {
     console.log({
       totalPrice,
       items: totalItem
     });
+    try {
+      let res = await axios({
+        url: "https://g4bt0.sse.codesandbox.io/add",
+        method: "POST",
+        responseType: "arraybuffer",
+        headers: {
+          "Content-Type": "application/pdf"
+        },
+        data: {
+          user: username,
+          result: totalItem,
+          totalPrice: totalPrice
+        }
+      });
+
+      console.log(res);
+
+      download(res.data, "bill.pdf", "application/pdf");
+      // if (res.status === 200) {
+      //   console.log(res.data);
+      //   //navigate("/print");
+      // }
+    } catch (e) {
+      console.error("Error Occured while sending the data : ", e);
+    }
   }
+
+  useEffect(() => {
+    // call the server of the menu
+    _fetchMenu();
+  }, []);
 
   useEffect(() => {
     if (menu) {

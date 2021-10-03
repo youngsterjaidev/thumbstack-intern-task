@@ -11,6 +11,12 @@ interface Props {
   setTotalPrice: any;
 }
 
+const styles = {
+  price: {
+    fontSize: "2em"
+  }
+};
+
 const App = styled.div`
   padding: 1em;
   background: #fff;
@@ -21,7 +27,6 @@ const Container = styled.div`
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  padding: 1em;
   justify-content: space-between;
 `;
 
@@ -72,7 +77,7 @@ const Item: React.FC<Props> = (props) => {
           <div>{props.itemName}</div>
         </Wrapper>
         <div>
-          <div>{props.price}</div>
+          <div style={styles.price}>Rs.{props.price}/-</div>
         </div>
       </Container>
     </App>
